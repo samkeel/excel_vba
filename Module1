@@ -1,0 +1,154 @@
+'a collection that can be used by the entire module rather than passing data
+Dim myCol As New Collection
+
+Sub wkbookImport()
+
+    Dim refPath As String
+    Dim colCount As Long
+    Dim refOpenWB1 As Workbook
+    Dim refOpenWS1 As Worksheet
+    Dim wbWsCount As Long
+    Dim datarange1 As Variant
+    Dim rowCount As Long
+    Dim dataRCount As Long
+    Dim intABS As Integer
+    Dim intCable As Integer
+    Dim fileBool As Boolean
+    
+
+    '---
+    ' PAUSE EXCEL UPDATES - to prevent slow down
+    '---
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    Application.Calculation = xlCalculationManual
+    DisplayStatusBar = Application.DisplayStatusBar
+    Application.DisplayStatusBar = True
+    
+    'use microsoft runtime script (a powerful reference (use with care))
+    'read through folder paths
+    
+    Dim FSO As Scripting.FileSystemObject
+    Dim TopFolder As Scripting.Folder
+    Dim TopFolderPath As String
+    
+    'set folder path
+    'temp folder path for testing
+    TopFolderPath = "C:\tempSK\timesheets"
+    'create an instance of the filesystemobject
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    'set the top folder
+    Set TopFolder = FSO.GetFolder(TopFolderPath)
+    'call recursive formula
+    Call RecursiveFolder(TopFolder, True)
+    
+    '----
+    'workbook stuff
+    '----
+    rowCount = 1
+    
+    If myCol.Count > 0 Then
+        For colCount = 1 To myCol.Count
+            'set file path from collection
+            refPath = myCol.Item(colCount)
+            'TODO - turn visibility off - load in background - will make file run faster
+            Set refOpenWB1 = Workbooks.Open(refPath, UpdateLinks:=False, ReadOnly:=True)
+            'for loop to increment through each worksheet
+            For wbWsCount = 1 To refOpenWB1.Sheets.Count
+                'open worksheet
+                Set refOpenWS1 = refOpenWB1.Sheets(wbWsCount)
+                'read worksheet contents into a giant variable array (most efficient method)
+                datarange1 = refOpenWS1.Range("A4").CurrentRegion.Value
+                
+                'the reportable columns are different per workbook and per worksheet
+                'case statement to quickly select the right layout format
+                'when case is true all other cases are ignored
+                'case is filtering on workbook name. when it finds the name, different conditions are
+                'activated through if statements to set the correct columns for output
+                
+                Select Case True
+                    Case (InStr(refOpenWB1.Name, "D9.3") > 0)
+                        intABS = 2
+                        intCable = 6
+                    Case (InStr(refOpenWB1.Name, "D9.4") > 0)
+                        intABS = 1
+                        intCable = 5
+                    Case (InStr(refOpenWB1.Name, "D9.5") > 0)
+                        If refOpenWS1.Name = "Instrument" Then
+                            intABS = 4
+                            intCable = 7
+                        End If
+                        If refOpenWS1.Name = "Electrical" Then
+                            intABS = 4
+                            intCable = 7
+                        End If
+                    Case (InStr(refOpenWB1.Name, "D9.6") > 0)
+                       If refOpenWS1.Name = "Instrument" Then
+                            intABS = 4
+                            intCable = 8
+                        End If
+                        If refOpenWS1.Name = "Electrical" Then
+                            intABS = 4
+                            intCable = 8
+                        End If
+                        If refOpenWS1.Name = "Slit" Then
+                            intABS = 4
+                            intCable = 7
+                        End If
+                End Select
+                
+                'read through extracted excel worksheet data and write to current worksheet
+                
+                For dataRCount = 1 To UBound(datarange1)
+                    'filter out labels
+                    If datarange1(dataRCount, intABS) <> "ABS" Then
+                        Sheet1.Cells(rowCount, 1) = datarange1(dataRCount, intABS)
+                    End If
+                    If datarange1(dataRCount, intCable) <> "TAG NUMBER" Then
+                        Sheet1.Cells(rowCount, 2) = datarange1(dataRCount, intCable)
+                    End If
+                    'increment counter to move to next row
+                    rowCount = rowCount + 1
+                    'next datarange1 record
+                Next dataRCount
+            
+            Next wbWsCount
+            'close workbook without saving
+            refOpenWB1.Close (False)
+        Next colCount
+    End If
+    
+    '----
+    ' RESET SETTINGS
+    '----
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.ScreenUpdating = True
+    
+End Sub
+
+Sub RecursiveFolder(objFolder As Scripting.Folder, includeSubFolders As Boolean)
+
+Dim objFile As Scripting.file
+Dim objSubFolder As Scripting.Folder
+
+Dim istrPos As Integer
+
+'loop through all files
+For Each objFile In objFolder.Files
+    'find only specific file name in string
+    istrPos = InStr(objFile.Name, "D9")
+    If istrPos > 0 Then
+        'add object file path to collection
+        myCol.Add objFile.Path
+    End If
+Next objFile
+
+'look for subfolders. for each subfolder call the above formula = recursive
+If includeSubFolders Then
+    For Each objSubFolder In objFolder.SubFolders
+        Call RecursiveFolder(objSubFolder, True)
+    Next objSubFolder
+End If
+
+End Sub
