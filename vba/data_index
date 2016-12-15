@@ -1,7 +1,7 @@
 'a collection that can be used by the entire module rather than passing data
 Dim myCol As New Collection
 
-Sub wkbookImport()
+Sub wkBookImport()
 
     Dim refPath As String
     Dim colCount As Long
@@ -43,7 +43,7 @@ Sub wkbookImport()
     Call RecursiveFolder(TopFolder, True)
     
     '----
-    'workbook stuff
+    'Active workbook additions
     '----
     rowCount = 1
     
@@ -51,7 +51,6 @@ Sub wkbookImport()
         For colCount = 1 To myCol.Count
             'set file path from collection
             refPath = myCol.Item(colCount)
-            'TODO - turn visibility off - load in background - will make file run faster
             Set refOpenWB1 = Workbooks.Open(refPath, UpdateLinks:=False, ReadOnly:=True)
             'for loop to increment through each worksheet
             For wbWsCount = 1 To refOpenWB1.Sheets.Count
@@ -64,7 +63,7 @@ Sub wkbookImport()
                 'case statement to quickly select the right layout format
                 'when case is true all other cases are ignored
                 'case is filtering on workbook name. when it finds the name, different conditions are
-                'activated through if statements to set the correct columns for output
+                'activated through, if statements to set the correct columns for output
                 
                 Select Case True
                     Case (InStr(refOpenWB1.Name, "D9.3") > 0)
