@@ -57,6 +57,7 @@ Sub wkBookImport()
                 'open worksheet
                 Set refOpenWS1 = refOpenWB1.Sheets(wbWsCount)
                 'read worksheet contents into a giant variable array (most efficient method)
+                'the template files start at cell A4
                 datarange1 = refOpenWS1.Range("A4").CurrentRegion.Value
                 
                 'the reportable columns are different per workbook and per worksheet
