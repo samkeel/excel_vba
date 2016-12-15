@@ -34,7 +34,7 @@ Sub wkBookImport()
     
     'set folder path
     'temp folder path for testing
-    TopFolderPath = "C:\tempSK\timesheets"
+    TopFolderPath = "C:\tempSK\sample_directory"
     'create an instance of the filesystemobject
     Set FSO = CreateObject("Scripting.FileSystemObject")
     'set the top folder
